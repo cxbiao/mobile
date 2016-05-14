@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context-4.2.xsd
+           http://www.springframework.org/schema/aop
+           http://www.springframework.org/schema/aop/spring-aop-4.2.xsd
+           http://www.springframework.org/schema/tx 
+           http://www.springframework.org/schema/tx/spring-tx-4.2.xsd
+           http://www.springframework.org/schema/mvc
+           http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd">
+
+
+    <context:component-scan base-package="com.bryan.controller"/>
+	<mvc:annotation-driven conversion-service="conversionService"/>
+	
+	<!-- 静态资源不处理 -->
+    <mvc:resources location="/js/" mapping="/js/**"></mvc:resources>
+	<mvc:resources location="/h5/" mapping="/h5/**"></mvc:resources>
+	<mvc:resources location="/css/" mapping="/css/**"></mvc:resources>
+	<mvc:resources location="/image/" mapping="/image/**"></mvc:resources>
+
+
+	<!-- 自定义参数绑定 -->
+	<bean id="conversionService"
+		class="org.springframework.format.support.FormattingConversionServiceFactoryBean">
+		<!--转换器 -->
+		<property name="converters">
+			<list>
+				<!-- 日期类型转换 -->
+				<bean class="com.bryan.converter.CustomDateConverter" />
+			</list>
+		</property>
+	</bean>
+
+
+	<!-- 全局异常处理器 -->
+	<bean class="com.bryan.exception.CustomExceptionResolver" />
+
+	<!-- 配置视图解析器 -->
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<!-- 前缀 /WEB-INF/jsps/home.jsp -->
+		<property name="prefix" value="/WEB-INF/jsp/"></property>
+		<!-- 后缀 -->
+		<property name="suffix" value=".jsp"></property>
+		<!--前缀+逻辑名+后缀 就是要返回的资源 -->
+	</bean>
+
+
+	<!-- id="multipartResolver"必须是multipartResolver -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<!-- maxUploadSize:所有上传文件的总和最大值 以byte为单位 5M-->
+		<property name="maxUploadSize" value="5242880" />
+	</bean>
+	<!-- 拦截器 -->
+	<mvc:interceptors>
+	<!-- 多个拦截器，顺序执行 -->
+     <mvc:interceptor>
+       <!-- /**表示所有url包括子url路径 -->
+       <mvc:mapping path="/**"/>
+       <bean class="com.bryan.interceptor.MyInterceptor1"></bean>
+     </mvc:interceptor>
+     <mvc:interceptor>
+       <mvc:mapping path="/**"/>
+       <bean class="com.bryan.interceptor.MyInterceptor2"></bean>
+     </mvc:interceptor>
+   </mvc:interceptors>
+</beans>

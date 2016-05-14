@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context-4.2.xsd
+           http://www.springframework.org/schema/aop
+           http://www.springframework.org/schema/aop/spring-aop-4.2.xsd
+           http://www.springframework.org/schema/tx 
+           http://www.springframework.org/schema/tx/spring-tx-4.2.xsd
+           http://www.springframework.org/schema/mvc
+           http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd">
+	
+	
+	<context:component-scan base-package="com.bryan.service.impl"/>
+	<!-- 加载jdbc配置文件 -->
+	<context:property-placeholder location="classpath:jdbc.properties" />
+
+   <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+      <!-- 数据库连接信息 -->
+		<property name="jdbcUrl" value="${jdbc.url}" />
+		<property name="driverClass" value="${jdbc.driver}" />
+		<property name="user" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+		<!-- 关于连接池的信息 -->
+		<property name="maxPoolSize" value="${c3p0.pool.size.max}" />
+		<property name="minPoolSize" value="${c3p0.pool.size.min}" />
+		<property name="initialPoolSize" value="${c3p0.pool.size.init}" />
+		<property name="acquireIncrement" value="${c3p0.pool.size.increment}" />
+   </bean>
+   
+   <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+      <property name="dataSource" ref="dataSource"/>
+      <!-- mybatis的配置文件 -->
+      <property name="configLocation" value="classpath:mybatis/SqlMapConfig.xml"/>
+      
+      
+   </bean>
+   
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+       <property name="dataSource" ref="dataSource"/>
+   </bean>
+   
+   <!-- spring默认只对RuntimeException和Error进行rollback
+      需要配置rollback-for来使自定义异常rollback
+    -->
+   <tx:advice id="tx" transaction-manager="transactionManager">
+     <tx:attributes>
+        <tx:method name="save*" propagation="REQUIRED" rollback-for="com.bryan.exception.CustomException"/>
+        <tx:method name="update*" propagation="REQUIRED" rollback-for="com.bryan.exception.CustomException"/>
+        <tx:method name="delete*" propagation="REQUIRED" rollback-for="com.bryan.exception.CustomException"/>
+        <tx:method name="get*" propagation="SUPPORTS" read-only="true"/>
+        <tx:method name="find*" propagation="SUPPORTS" read-only="true"/>
+        <tx:method name="*"/>
+     </tx:attributes>
+   </tx:advice>
+   
+   <aop:config>
+      <aop:pointcut expression="execution(* com.bryan.service.impl.*.*(..))" id="perform"/>
+      <aop:advisor advice-ref="tx" pointcut-ref="perform"/>
+   </aop:config>
+   
+      <!-- 生成mapper接口
+   
+     <bean id="userDao" class="org.mybatis.spring.mapper.MapperFactoryBean">
+     <property name="mapperInterface" value="cn.mybatis.dao.UserDao"/>
+     <property name="sqlSessionFactory" ref="sessionFactory"/>
+   </bean>
+    -->
+   
+   <!-- 自动搜索基包或其所有子包下面的Mapper接口并注册，多个包用逗号分隔 -->
+ 
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+       <property name="basePackage" value="com.bryan.mapper"/>
+   </bean>
+   
+    
+</beans>
